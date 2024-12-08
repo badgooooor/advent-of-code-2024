@@ -26,9 +26,17 @@ fn main() -> std::io::Result<()> {
         _ => println!("Something wrong in result 1"),
     }
 
+    // Solve part 1
+    let result_2 = solve_2(&content);
+    match result_2 {
+        Ok(total) => println!("Result 2: {}", total),
+        _ => println!("Something wrong in result 1"),
+    }
+
     Ok(())
 }
 
+// Note: Create line of horizontal, vertical and diagonal and use regex to check XMAS both normal and reversed
 fn solve_1(content: &Vec<String>) -> Result<i32, i32> {
     // Horizontal
     let horizontal_count = match_line_horizontal_count(content);
@@ -50,6 +58,47 @@ fn solve_1(content: &Vec<String>) -> Result<i32, i32> {
         + vertical_reverse_count?
         + diagonals_count?
         + diagonals_reverse_count?)
+}
+
+// Note: Loop though inner character, check "A" and check its branch.
+fn solve_2(content: &Vec<String>) -> Result<i32, i32> {
+    let mut count: i32 = 0;
+    let rows = content.len();
+    let cols = content[0].len();
+
+    for i in 1..rows - 1 {
+        for j in 1..cols - 1 {
+            let ch = content[i].chars().nth(j).unwrap();
+
+            if ch == 'A' {
+                let mut can_be_x_1 = String::new();
+                can_be_x_1.push(content[i - 1].chars().nth(j - 1).unwrap());
+                can_be_x_1.push(ch);
+                can_be_x_1.push(content[i + 1].chars().nth(j + 1).unwrap());
+
+                let mut can_be_x_2 = String::new();
+                can_be_x_2.push(content[i - 1].chars().nth(j + 1).unwrap());
+                can_be_x_2.push(ch);
+                can_be_x_2.push(content[i + 1].chars().nth(j - 1).unwrap());
+
+                let is_this_xmas = string_mas_or_sam(&can_be_x_1) && string_mas_or_sam(&can_be_x_2);
+
+                if is_this_xmas {
+                    count += 1;
+                }
+            }
+        }
+    }
+
+    Ok(count)
+}
+
+// Part 2: For checking branch if it is MAS or SAM.
+fn string_mas_or_sam(text: &String) -> bool {
+    let re = Regex::new(r"SAM").unwrap();
+    let re_reversed = Regex::new(r"MAS").unwrap();
+
+    re.is_match(&text) || re_reversed.is_match(&text)
 }
 
 // Core: Match horizontal
