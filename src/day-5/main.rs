@@ -52,7 +52,8 @@ fn main() -> std::io::Result<()> {
         }
     }
 
-    let (correct_ordered_pages, _) = group_ordered_pages(&order_rules_map, &page_updates);
+    let (correct_ordered_pages, incorrect_ordered_pages) =
+        group_ordered_pages(&order_rules_map, &page_updates);
 
     // Solve part 1
     let result_1 = solve_1(&correct_ordered_pages);
@@ -61,16 +62,51 @@ fn main() -> std::io::Result<()> {
         _ => println!("Something wrong in result 1"),
     }
 
+    // Solve part 2
+    let result_2 = solve_2(&incorrect_ordered_pages, &order_rules_map);
+    match result_2 {
+        Ok(total) => println!("Result 2: {}", total),
+        _ => println!("Something wrong in result 1"),
+    }
+
     Ok(())
 }
 
 fn solve_1(correct_ordered_pages: &Vec<Vec<i32>>) -> Result<i32, i32> {
-    return Ok(correct_ordered_pages
-        .iter()
-        .map(|vec| vec[vec.len() / 2])
-        .sum());
+    return Ok(sum_of_middle_element(correct_ordered_pages));
 }
 
+fn solve_2(
+    incorrect_ordered_pages: &Vec<Vec<i32>>,
+    order_rules_map: &HashMap<i32, Vec<i32>>,
+) -> Result<i32, i32> {
+    let mut corrected_pages = Vec::new();
+    for page_update in incorrect_ordered_pages.iter() {
+        let mut mutable_page_update: Vec<i32> = page_update.clone();
+
+        for i in 0..mutable_page_update.len() {
+            let current_page = mutable_page_update[i];
+            let order_rules_map_page = order_rules_map.get(&current_page);
+
+            match order_rules_map_page {
+                Some(rules) => {
+                    for j in 0..mutable_page_update.len() {
+                        if rules.contains(&mutable_page_update[j]) && i > j {
+                            mutable_page_update.swap(i, j);
+                        }
+                    }
+                }
+                None => continue,
+            }
+        }
+
+        corrected_pages.push(mutable_page_update.to_vec());
+    }
+
+    Ok(sum_of_middle_element(&corrected_pages))
+}
+
+// Core: Group correct ordered pages and incorrect ordered pages
 fn group_ordered_pages(
     order_rules_map: &HashMap<i32, Vec<i32>>,
     page_updates: &Vec<Vec<i32>>,
@@ -103,4 +139,9 @@ fn group_ordered_pages(
     }
 
     return (correct_ordered_pages, incorrect_ordered_pages);
+}
+
+// Core: Sum of middle element in Vec<i32>
+fn sum_of_middle_element(vec: &Vec<Vec<i32>>) -> i32 {
+    return vec.iter().map(|vec| vec[vec.len() / 2]).sum();
 }
