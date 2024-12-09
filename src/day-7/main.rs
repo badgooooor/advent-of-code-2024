@@ -17,6 +17,12 @@ fn main() -> std::io::Result<()> {
         _ => println!("Something wrong in result 1"),
     }
 
+    let result_2 = solve_2(&calibrations);
+    match result_2 {
+        Ok(total) => println!("Result 2: {}", total),
+        _ => println!("Something wrong in result 1"),
+    }
+
     Ok(())
 }
 
@@ -35,6 +41,38 @@ fn solve_1(calibrations: &Vec<(u64, Vec<u64>)>) -> Result<u64, u64> {
                     result += calibration.1[i + 1];
                 } else {
                     result *= calibration.1[i + 1];
+                }
+            }
+            if result == calibration.0 {
+                sum.fetch_add(calibration.0, std::sync::atomic::Ordering::SeqCst);
+                break;
+            }
+        }
+    });
+
+    let sum_value = sum.load(std::sync::atomic::Ordering::SeqCst);
+    Ok(sum_value)
+}
+
+fn solve_2(calibrations: &Vec<(u64, Vec<u64>)>) -> Result<u64, u64> {
+    let sum = Arc::new(AtomicU64::new(0));
+
+    calibrations.into_par_iter().for_each(|calibration| {
+        let sum = Arc::clone(&sum);
+        let calibration_count = calibration.1.len() - 1;
+        let max_operator = 3usize.pow(calibration_count as u32);
+
+        for operator in 0..max_operator {
+            let mut result = calibration.1[0];
+            for i in 0..calibration_count {
+                match operator / 3usize.pow(i as u32) % 3 {
+                    0 => result += calibration.1[i + 1],
+                    1 => result *= calibration.1[i + 1],
+                    _ => {
+                        result = format!("{}{}", result, calibration.1[i + 1])
+                            .parse()
+                            .unwrap()
+                    }
                 }
             }
             if result == calibration.0 {
