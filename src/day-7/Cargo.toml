@@ -1,0 +1,11 @@
+[package]
+name = "day-7"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rayon = "1.10.0"
+
+[[bin]]
+name = "day-7"
+path = "main.rs"
